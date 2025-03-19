@@ -5,16 +5,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { 
   ClipboardCheck, 
   Book, 
-  Search, 
   Menu, 
-  X
+  X,
+  BookmarkIcon
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useProgress } from "@/contexts/ProgressContext";
 
 const Navbar = () => {
   const { toast } = useToast();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { bookmarkedQuestions } = useProgress();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -48,6 +50,15 @@ const Navbar = () => {
             </Link>
             <Link to="/questions/all" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-brand-600 hover:bg-gray-50">
               Questions
+            </Link>
+            <Link to="/bookmarks" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-brand-600 hover:bg-gray-50 flex items-center">
+              <BookmarkIcon className="h-4 w-4 mr-1" />
+              Bookmarks
+              {bookmarkedQuestions.length > 0 && (
+                <span className="ml-1 bg-brand-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  {bookmarkedQuestions.length}
+                </span>
+              )}
             </Link>
             <Button variant="ghost" className="ml-4" onClick={handleLogIn}>
               Log In
@@ -92,6 +103,19 @@ const Navbar = () => {
             onClick={() => setIsMenuOpen(false)}
           >
             Questions
+          </Link>
+          <Link 
+            to="/bookmarks" 
+            className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-brand-600 hover:bg-gray-50 flex items-center"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <BookmarkIcon className="h-4 w-4 mr-2" />
+            Bookmarks
+            {bookmarkedQuestions.length > 0 && (
+              <span className="ml-1 bg-brand-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                {bookmarkedQuestions.length}
+              </span>
+            )}
           </Link>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="flex items-center px-5">

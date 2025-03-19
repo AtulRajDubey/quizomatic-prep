@@ -2,12 +2,27 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { topics } from "@/data/questions";
-import { ClipboardCheck, ArrowRight, Search, Book, Code } from "lucide-react";
+import { topics, questions, categories } from "@/data/questions";
+import { ClipboardCheck, ArrowRight, Search, Book, Code, PieChart, Bookmark, CheckCircle2 } from "lucide-react";
+import { useProgress } from "@/contexts/ProgressContext";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Index = () => {
   const navigate = useNavigate();
   const featuredTopics = topics.slice(0, 3);
+  const { answeredQuestions, bookmarkedQuestions } = useProgress();
+  
+  const totalQuestions = questions.length;
+  const answeredCount = Object.values(answeredQuestions).filter(Boolean).length;
+  const progress = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
+  
+  // Get recently viewed categories (for now just showing some categories)
+  const recentCategories = categories.slice(1, 5);
 
   return (
     <div className="space-y-16">
@@ -36,6 +51,132 @@ const Index = () => {
             >
               Browse Topics
             </Button>
+          </div>
+        </div>
+      </section>
+      
+      {/* Progress Summary */}
+      <section className="py-10 bg-white shadow-sm rounded-lg border">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Progress</h2>
+            <p className="text-lg text-gray-600">
+              Track your interview preparation journey
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="bg-gray-50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl flex items-center justify-center">
+                  <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
+                  Questions Answered
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-2 text-center">
+                <div className="text-4xl font-bold text-gray-900">{answeredCount}</div>
+                <p className="text-sm text-gray-500">out of {totalQuestions} questions</p>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
+                  <div 
+                    className="bg-green-600 h-2.5 rounded-full" 
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{progress}% complete</p>
+              </CardContent>
+              <CardFooter className="pt-0 justify-center">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate("/questions/all")}
+                >
+                  Continue Practicing
+                </Button>
+              </CardFooter>
+            </Card>
+            
+            <Card className="bg-gray-50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl flex items-center justify-center">
+                  <Bookmark className="h-5 w-5 mr-2 text-yellow-500" />
+                  Bookmarked Questions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-2 text-center">
+                <div className="text-4xl font-bold text-gray-900">{bookmarkedQuestions.length}</div>
+                <p className="text-sm text-gray-500">questions saved for review</p>
+              </CardContent>
+              <CardFooter className="pt-0 justify-center">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate("/bookmarks")}
+                >
+                  View Bookmarks
+                </Button>
+              </CardFooter>
+            </Card>
+            
+            <Card className="bg-gray-50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xl flex items-center justify-center">
+                  <PieChart className="h-5 w-5 mr-2 text-blue-600" />
+                  Topic Coverage
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {topics.slice(0, 5).map(topic => (
+                    <TooltipProvider key={topic.id}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div 
+                            className="w-3 h-12 rounded-sm cursor-pointer"
+                            style={{ 
+                              backgroundColor: `hsl(${210 + topics.findIndex(t => t.id === topic.id) * 40}, 80%, 60%)`,
+                              opacity: 0.7 + (Math.random() * 0.3) // Random variation for visual effect
+                            }}
+                          ></div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{topic.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-500 mt-3 text-center">Coverage across {topics.length} topics</p>
+              </CardContent>
+              <CardFooter className="pt-0 justify-center">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate("/topics/all")}
+                >
+                  View All Topics
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+          
+          {/* Quick Links */}
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold mb-4">Recent Categories</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {recentCategories.map(category => (
+                <Button 
+                  key={category.id}
+                  variant="outline"
+                  className="justify-start h-auto py-3"
+                  onClick={() => navigate(`/questions/${category.id}`)}
+                >
+                  <div className="text-left">
+                    <div className="font-medium">{category.name}</div>
+                    <div className="text-xs text-gray-500">{category.questionCount} questions</div>
+                  </div>
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </section>

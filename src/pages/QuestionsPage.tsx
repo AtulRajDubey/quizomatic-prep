@@ -1,20 +1,18 @@
 
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   ChevronLeft, 
   Search, 
   Filter, 
-  ChevronDown, 
-  ChevronUp, 
   CheckCircle2, 
-  XCircle
+  XCircle,
+  BookmarkIcon
 } from "lucide-react";
 import { 
   questions, 
-  Question,
   categories
 } from "@/data/questions";
 import { 
@@ -31,13 +29,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { useProgress } from "@/contexts/ProgressContext";
+import { toast } from "sonner";
 
 const QuestionsPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [difficulty, setDifficulty] = useState<string>("all");
-  const [answeredQuestions, setAnsweredQuestions] = useState<Record<number, boolean>>({});
+  
+  const { 
+    answeredQuestions, 
+    markAsAnswered, 
+    toggleBookmark, 
+    isBookmarked 
+  } = useProgress();
   
   const currentCategory = categories.find(cat => cat.id === categoryId) || categories[0];
   
@@ -49,19 +55,22 @@ const QuestionsPage = () => {
     return matchesCategory && matchesSearch && matchesDifficulty;
   });
 
-  const markAsAnswered = (questionId: number, isAnswered: boolean) => {
-    setAnsweredQuestions(prev => ({
-      ...prev,
-      [questionId]: isAnswered
-    }));
-  };
-
-  const answeredCount = Object.values(answeredQuestions).filter(Boolean).length;
+  const answeredCount = filteredQuestions.filter(q => answeredQuestions[q.id]).length;
   const totalQuestions = filteredQuestions.length;
   const progress = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
 
+  const handleBookmarkToggle = (questionId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleBookmark(questionId);
+    toast(isBookmarked(questionId) ? "Bookmark removed" : "Bookmark added", {
+      description: isBookmarked(questionId) 
+        ? "Question removed from your bookmarks" 
+        : "Question added to your bookmarks",
+    });
+  };
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto">
       <Button 
         variant="ghost" 
         className="mb-6" 
@@ -89,14 +98,16 @@ const QuestionsPage = () => {
               </div>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setAnsweredQuestions({})}
-            className="w-full sm:w-auto"
-          >
-            Reset Progress
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate("/bookmarks")}
+            >
+              <BookmarkIcon className="h-4 w-4 mr-2" />
+              My Bookmarks
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -137,8 +148,8 @@ const QuestionsPage = () => {
                 className="border border-gray-200 rounded-lg overflow-hidden"
               >
                 <AccordionTrigger className="px-6 py-4 hover:bg-gray-50">
-                  <div className="flex flex-col md:flex-row md:items-center text-left">
-                    <div className="flex-grow">
+                  <div className="flex justify-between w-full pr-4">
+                    <div className="flex-grow text-left">
                       <div className="flex items-center">
                         <Badge variant={
                           question.difficulty === "Easy" ? "outline" : 
@@ -156,6 +167,14 @@ const QuestionsPage = () => {
                       </div>
                       <h3 className="text-lg font-medium mt-2">{question.question}</h3>
                     </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className={isBookmarked(question.id) ? "text-yellow-500" : "text-gray-400"}
+                      onClick={(e) => handleBookmarkToggle(question.id, e)}
+                    >
+                      <BookmarkIcon className={`h-5 w-5 ${isBookmarked(question.id) ? "fill-current" : ""}`} />
+                    </Button>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-6 py-4 bg-gray-50 border-t">
@@ -180,6 +199,11 @@ const QuestionsPage = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           markAsAnswered(question.id, !answeredQuestions[question.id]);
+                          if (!answeredQuestions[question.id]) {
+                            toast("Question marked as answered", {
+                              description: "Your progress has been updated.",
+                            });
+                          }
                         }}
                       >
                         {answeredQuestions[question.id] ? (
@@ -193,6 +217,16 @@ const QuestionsPage = () => {
                             Mark as Answered
                           </>
                         )}
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBookmarkToggle(question.id, e);
+                        }}
+                      >
+                        <BookmarkIcon className={`h-4 w-4 mr-2 ${isBookmarked(question.id) ? "fill-current text-yellow-500" : ""}`} />
+                        {isBookmarked(question.id) ? "Bookmarked" : "Bookmark"}
                       </Button>
                     </div>
                   </div>
